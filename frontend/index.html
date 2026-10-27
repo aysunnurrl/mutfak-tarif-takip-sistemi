@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mutfak Yönetimi ve Tarif Takip Sistemi | RBAC Portalı</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 font-['Inter'] antialiased min-h-screen selection:bg-amber-500 selection:text-white">
+
+  <!-- ================= NOTIFICATION TOAST ================= -->
+  <div id="toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+    <i id="toastIcon" class="text-xl"></i>
+    <div>
+      <h4 id="toastTitle" class="text-sm font-semibold"></h4>
+      <p id="toastMessage" class="text-xs text-slate-300"></p>
+    </div>
+  </div>
+
+  <!-- ================= 1. GİRİŞ (LOGIN) EKRANI ================= -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Ambient Background Lighting -->
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-1/2 right-1/3 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md bg-slate-900/80 border border-slate-800 backdrop-blur-xl rounded-2xl shadow-2xl p-8 relative z-10">
+      <!-- Logo / Header -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-utensils text-2xl text-white"></i>
+        </div>
+        <h1 class="text-2xl font-bold font-['Outfit'] tracking-tight text-white">Mutfak & Tarif Takip</h1>
+        <p class="text-sm text-slate-400 mt-1">Rol Tabanlı Yetkilendirme (RBAC) Portalı</p>
+      </div>
+
+      <!-- Quick Role Fill Demo Badges -->
+      <div class="mb-6 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+        <p class="text-xs text-slate-400 font-medium mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400"></i> Hızlı Test Girişi (Veritabanı Kullanıcıları):
+        </p>
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <button onclick="fillLogin('ahmet.yilmaz', 'Ynt123.')" class="bg-purple-950/40 hover:bg-purple-900/50 text-purple-300 border border-purple-800/50 py-1.5 px-2 rounded-lg text-center transition flex flex-col items-center">
+            <span class="font-bold">Yönetici</span>
+            <span class="text-[10px] text-purple-400/80">Ahmet Y.</span>
+          </button>
+          <button onclick="fillLogin('kerem.usta', 'Mutfak101!')" class="bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-800/50 py-1.5 px-2 rounded-lg text-center transition flex flex-col items-center">
+            <span class="font-bold">Aşçı / Şef</span>
+            <span class="text-[10px] text-amber-400/80">Kerem U.</span>
+          </button>
+          <button onclick="fillLogin('mehmet.oz', 'Depo123.')" class="bg-blue-950/40 hover:bg-blue-900/50 text-blue-300 border border-blue-800/50 py-1.5 px-2 rounded-lg text-center transition flex flex-col items-center">
+            <span class="font-bold">Depo Sor.</span>
+            <span class="text-[10px] text-blue-400/80">Mehmet Ö.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Kullanıcı Adı</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input 
+              type="text" 
+              id="kadiInput" 
+              required
+              placeholder="kullanici.adi"
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none text-sm transition"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Şifre</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input 
+              type="password" 
+              id="sifreInput" 
+              required
+              placeholder="••••••••"
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none text-sm transition"
+            />
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="loginBtn"
+          class="w-full mt-2 py-3 px-4 bg-gradient-to-r from-amber-500 hover:from-amber-600 to-orange-500 hover:to-orange-600 text-slate-950 font-semibold rounded-xl shadow-lg shadow-amber-500/25 transition duration-200 flex items-center justify-center gap-2"
+        >
+          <span>Sisteme Giriş Yap</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-xs text-slate-500">
+        MySQL & MariaDB Güvenli RBAC Mimarisi &copy; 2026
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 2. DASHBOARD ANA EKRANI (ROL BAZLI) ================= -->
+  <div id="appView" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- SIDEBAR -->
+    <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div>
+        <!-- Sidebar Brand -->
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 font-bold shadow-md">
+            <i class="fa-solid fa-utensils"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-white leading-tight font-['Outfit']">Mutfak Sistemi</h2>
+            <span id="userBadgeRole" class="text-[11px] font-semibold px-2 py-0.5 rounded-full inline-block mt-0.5"></span>
+          </div>
+        </div>
+
+        <!-- User Info Snapshot -->
+        <div class="p-4 mx-3 my-3 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-sm">
+            <span id="userInitials">AY</span>
+          </div>
+          <div class="overflow-hidden">
+            <h3 id="userFullName" class="text-xs font-semibold text-white truncate">Kullanıcı Adı</h3>
+            <p id="userEmail" class="text-[11px] text-slate-400 truncate">kullanici@restoran.com</p>
+          </div>
+        </div>
+
+        <!-- Navigation Links (Dynamic RBAC filtering) -->
+        <nav class="px-3 space-y-1 mt-4">
+          <!-- Herkesin görebildiği: Tarifler -->
+          <button onclick="switchTab('tariflerTab')" id="nav-tarifler" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i class="fa-solid fa-book-open w-5 text-center text-amber-400"></i>
+            <span>Tarifler & Reçeteler</span>
+          </button>
+
+          <!-- AŞÇI ÖZEL: Porsiyon Simülatörü & Sıcaklık Kontrolü -->
+          <div id="navGroupAsci" class="space-y-1">
+            <button onclick="switchTab('asciSimulasyonTab')" id="nav-simulasyon" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-scale-balanced w-5 text-center text-amber-500"></i>
+              <span>Porsiyon Simülatörü</span>
+            </button>
+            <button onclick="switchTab('asciSicaklikTab')" id="nav-sicaklik" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-temperature-half w-5 text-center text-rose-400"></i>
+              <span>Sıcaklık Kontrolü</span>
+            </button>
+          </div>
+
+          <!-- DEPO SORUMLUSU ÖZEL: Stok Giriş/Çıkış & Satınalma Talepleri -->
+          <div id="navGroupDepo" class="space-y-1">
+            <button onclick="switchTab('depoStoklarTab')" id="nav-stoklar" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-boxes-stacked w-5 text-center text-blue-400"></i>
+              <span>Stok & Depo Takibi</span>
+            </button>
+            <button onclick="switchTab('depoHareketTab')" id="nav-hareket" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-arrow-right-arrow-left w-5 text-center text-cyan-400"></i>
+              <span>Stok Hareketi Ekle</span>
+            </button>
+            <button onclick="switchTab('satinalmaTab')" id="nav-talep" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-cart-shopping w-5 text-center text-emerald-400"></i>
+              <span>Satınalma Talepleri</span>
+            </button>
+          </div>
+
+          <!-- YÖNETİCİ ÖZEL: Kullanıcı Yönetimi & Satınalma Onayları & Raporlar -->
+          <div id="navGroupYonetici" class="space-y-1">
+            <button onclick="switchTab('yoneticiRaporTab')" id="nav-rapor" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-chart-pie w-5 text-center text-purple-400"></i>
+              <span>Maliyet & İstatistikler</span>
+            </button>
+            <button onclick="switchTab('yoneticiKullanicilarTab')" id="nav-kullanicilar" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-users-gear w-5 text-center text-indigo-400"></i>
+              <span>Kullanıcı Yönetimi</span>
+            </button>
+            <button onclick="switchTab('satinalmaTab')" id="nav-onaylar" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-clipboard-check w-5 text-center text-emerald-400"></i>
+              <span>Satınalma Onayları</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Footer & Logout -->
+      <div class="p-4 border-t border-slate-800">
+        <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/50 transition">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Güvenli Çıkış</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col bg-slate-950 overflow-y-auto max-h-screen">
+      <!-- Top Navigation Bar -->
+      <header class="h-16 border-b border-slate-800/80 px-6 flex items-center justify-between bg-slate-900/50 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex items-center gap-3">
+          <h2 id="pageTitle" class="text-lg font-bold text-white font-['Outfit']">Tarifler & Reçeteler</h2>
+          <span id="roleSecurityNotice" class="text-xs px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700"></span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <span id="headerClock" class="text-xs font-mono text-slate-400"></span>
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB CONTENTS -->
+      <div class="p-6 md:p-8 space-y-6">
+
+        <!-- ================= TAB 1: TARİFLER & REÇETELER (Herkes) ================= -->
+        <section id="tariflerTab" class="tab-pane">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold text-white">Sistemdeki Aktif Mutfak Reçeteleri</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                <span class="text-amber-400 font-semibold">Yetki Kuralı:</span> 
+                Yöneticiler maliyetleri ve reçeteyi görüntüler (içerik düzenleyemez). Aşçılar porsiyonlar. Depocular tarif maliyetlerini göremez.
+              </p>
+            </div>
+          </div>
+
+          <!-- Tarif Kartları Grid -->
+          <div id="recipeCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-12 text-slate-500">
+              <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-amber-500"></i>
+              <p>Tarifler veritabanından yükleniyor...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 2: AŞÇI - PORSİYON SİMÜLATÖRÜ ================= -->
+        <section id="asciSimulasyonTab" class="tab-pane hidden">
+          <div class="mb-6">
+            <h3 class="text-xl font-bold text-white">Porsiyon Simülatörü & Akıllı Reçete Ölçekleme</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              <span class="text-amber-400 font-semibold">Aşçı Kuralı:</span> 
+              Gerekli porsiyon katsayısına göre malzeme oranlarını hesaplayın. Stok miktarlarını doğrudan göremezsiniz; sistem kritik malzeme seviyelerinde otomatik uyarı verir.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Simülatör Kontrolleri -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-2">Simüle Edilecek Tarif</label>
+                <select id="simulatorRecipeSelect" onchange="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-amber-500 focus:outline-none">
+                  <!-- JS ile doldurulacak -->
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-2">
+                  <span class="font-semibold text-slate-300">Porsiyon Çarpanı:</span>
+                  <span id="multiplierValueBadge" class="font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">1.0x</span>
+                </div>
+                <input 
+                  type="range" 
+                  id="portionMultiplier" 
+                  min="0.5" 
+                  max="10" 
+                  step="0.5" 
+                  value="1" 
+                  oninput="updateMultiplier(this.value)"
+                  class="w-full accent-amber-500 cursor-pointer"
+                />
+                <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                  <span>0.5x (Yarım)</span>
+                  <span>1x (Standart)</span>
+                  <span>5x</span>
+                  <span>10x (Ziyafet)</span>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-slate-800">
+                <button onclick="runSimulation()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-calculator"></i>
+                  <span>Yeniden Hesapla</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Simülasyon Çıktı Tablosu -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <div class="flex items-center justify-between mb-4">
+                <h4 id="simRecipeTitle" class="font-bold text-white text-base">Tarif Seçiniz</h4>
+                <span id="simPortionBadge" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full"></span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead class="text-xs uppercase bg-slate-950/60 text-slate-400 border-b border-slate-800">
+                    <tr>
+                      <th class="px-4 py-3">Malzeme</th>
+                      <th class="px-4 py-3">Ölçeklenen Miktar</th>
+                      <th class="px-4 py-3">Sistem Stok Uyarısı</th>
+                    </tr>
+                  </thead>
+                  <tbody id="simResultsBody" class="divide-y divide-slate-800/60">
+                    <tr>
+                      <td colspan="3" class="text-center py-8 text-slate-500">Lütfen soldaki menüden bir tarif seçin.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 3: AŞÇI - SICAKLIK KONTROLÜ ================= -->
+        <section id="asciSicaklikTab" class="tab-pane hidden">
+          <div class="mb-6">
+            <h3 class="text-xl font-bold text-white">Ekipman Sıcaklık Kontrol Kaydı</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              <span class="text-rose-400 font-semibold">Gıda Güvenliği Standardı:</span> 
+              Mutfaktaki buzdolabı, fırın ve soğuk hava depolarının anlık sıcaklık ölçümlerini veritabanına işleyin.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Form -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h4 class="font-semibold text-white mb-4 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-thermometer text-rose-400"></i> Yeni Ölçüm Kaydet
+              </h4>
+              <form onsubmit="handleTempSubmit(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Ekipman Seçin</label>
+                  <select id="tempEquipmentSelect" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-rose-500 focus:outline-none">
+                    <!-- Dinamik -->
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Ölçülen Sıcaklık (°C)</label>
+                  <input 
+                    type="number" 
+                    id="tempValueInput" 
+                    step="0.1" 
+                    required 
+                    placeholder="Örn: 3.5 veya -18.0"
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-rose-500 focus:outline-none"
+                  />
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-sm transition">
+                  Ölçümü Kaydet
+                </button>
+              </form>
+            </div>
+
+            <!-- Bilgilendirme -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+              <div>
+                <h4 class="font-semibold text-white mb-2 text-sm">Kritik Sıcaklık Eşikleri</h4>
+                <ul class="text-xs text-slate-300 space-y-2 mt-4">
+                  <li class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span><strong>Soğuk Depo:</strong> 0°C ile +4°C arası normal kabul edilir.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span><strong>Derin Dondurucu:</strong> -18°C veya daha soğuk olmalıdır.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span><strong>Kritik Uyarı:</strong> +4°C üzerindeki soğuk hava ölçümleri anında yöneticiye raporlanır.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="mt-6 p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400">
+                <i class="fa-solid fa-circle-info text-amber-400 mr-1"></i> Tüm ölçümler kullanıcı ID ve tam zaman damgasıyla `sicaklikkontrolkaydi` tablosuna yazılır.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 4: DEPO - STOK & DEPO TAKİBİ ================= -->
+        <section id="depoStoklarTab" class="tab-pane hidden">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold text-white">Mevcut Malzeme & Depo Stok Seviyeleri</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                <span class="text-blue-400 font-semibold">Depocu / Yönetici Erişimi:</span> 
+                Stokları görüntüleyin. Kritik seviyenin altına düşen malzemeler için doğrudan satınalma talebi açabilirsiniz.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="px-5 py-3">ID</th>
+                    <th class="px-5 py-3">Malzeme Adı</th>
+                    <th class="px-5 py-3">Son Kullanma (SKT)</th>
+                    <th class="px-5 py-3">Min. Stok Eşiği</th>
+                    <th class="px-5 py-3">Güncel Stok</th>
+                    <th class="px-5 py-3">Durum</th>
+                    <th class="px-5 py-3 text-right">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="stockTableBody" class="divide-y divide-slate-800/60">
+                  <!-- Dinamik -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 5: DEPO - STOK HAREKETİ EKLE ================= -->
+        <section id="depoHareketTab" class="tab-pane hidden">
+          <div class="mb-6">
+            <h3 class="text-xl font-bold text-white">Stok Hareketi Ekle (Giriş / Çıkış / Fire)</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              <span class="text-cyan-400 font-semibold">Kısıtlama Kuralı:</span> 
+              Depo personeli onaylanmış geçmiş kayıtları değiştiremez. Sadece yeni Giriş, Çıkış veya Fire kaydı oluşturabilir.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Form -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h4 class="font-semibold text-white mb-4 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-cyan-400"></i> Yeni Hareket Kaydı
+              </h4>
+              <form onsubmit="handleStockMovementSubmit(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Malzeme</label>
+                  <select id="movementMaterialSelect" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-cyan-500 focus:outline-none">
+                    <!-- Dinamik -->
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">İşlem Tipi</label>
+                  <select id="movementTypeSelect" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-cyan-500 focus:outline-none">
+                    <option value="Giriş">📦 Stok Girişi (Tedarik)</option>
+                    <option value="Çıkış">🍳 Stok Çıkışı (Mutfak Kullanımı)</option>
+                    <option value="Fire">🗑️ Fire Kaydı (Bozulma/Zayiat)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Miktar (Birim)</label>
+                  <input type="number" id="movementAmountInput" min="1" required placeholder="Örn: 25" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Açıklama / Not</label>
+                  <input type="text" id="movementDescInput" placeholder="Örn: Haftalık sebze tedariği" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold rounded-xl text-sm transition">
+                  Hareketi Veritabanına Yaz
+                </button>
+              </form>
+            </div>
+
+            <!-- Son 50 Hareket Listesi -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h4 class="font-semibold text-white mb-4 text-sm flex items-center justify-between">
+                <span>Son Stok Hareketleri Geçmişi</span>
+                <span class="text-xs text-slate-400 font-normal">Salt Okunur (Değiştirilemez)</span>
+              </h4>
+              <div class="overflow-x-auto max-h-[450px]">
+                <table class="w-full text-left text-xs">
+                  <thead class="uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800 sticky top-0">
+                    <tr>
+                      <th class="px-3 py-2.5">ID</th>
+                      <th class="px-3 py-2.5">Malzeme</th>
+                      <th class="px-3 py-2.5">Tip</th>
+                      <th class="px-3 py-2.5">Miktar</th>
+                      <th class="px-3 py-2.5">İşlem Yapan</th>
+                      <th class="px-3 py-2.5">Tarih</th>
+                    </tr>
+                  </thead>
+                  <tbody id="movementsHistoryBody" class="divide-y divide-slate-800/60">
+                    <!-- Dinamik -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 6: SATINALMA TALEPLERİ & YÖNETİCİ ONAYI ================= -->
+        <section id="satinalmaTab" class="tab-pane hidden">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold text-white">Satınalma Talepleri & Onay Süreci</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                <span class="text-emerald-400 font-semibold">Yetki Akışı:</span> 
+                Depo personeli kritik stok için talep açar. Sadece Yönetici talepleri inceleyip onaylayabilir veya reddedebilir.
+              </p>
+            </div>
+            <!-- Depocu için talep aç butonu -->
+            <button id="openPurchaseModalBtn" onclick="openNewPurchaseModal()" class="hidden py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs transition items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Yeni Satınalma Talebi Oluştur
+            </button>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="px-5 py-3">Talep No</th>
+                    <th class="px-5 py-3">Talep Eden</th>
+                    <th class="px-5 py-3">Malzeme</th>
+                    <th class="px-5 py-3">Miktar</th>
+                    <th class="px-5 py-3">Talep Tarihi</th>
+                    <th class="px-5 py-3">Durum</th>
+                    <th class="px-5 py-3 text-right">Yönetici Aksiyonu</th>
+                  </tr>
+                </thead>
+                <tbody id="purchaseTableBody" class="divide-y divide-slate-800/60">
+                  <!-- Dinamik -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 7: YÖNETİCİ - RAPORLAR & MALİYET ================= -->
+        <section id="yoneticiRaporTab" class="tab-pane hidden">
+          <div class="mb-6">
+            <h3 class="text-xl font-bold text-white">Yönetici Raporları & Sistem İstatistikleri</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              <span class="text-purple-400 font-semibold">Yönetici Yetkisi:</span> 
+              Reçete birim maliyetleri, kritik sıcaklık kayıtları ve operasyonel sayaçlar.
+            </p>
+          </div>
+
+          <!-- Metrik Kartları -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs">Toplam Personel</span>
+                <i class="fa-solid fa-users text-indigo-400"></i>
+              </div>
+              <div id="statTotalUsers" class="text-2xl font-bold text-white font-['Outfit']">--</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs">Sistemdeki Tarif</span>
+                <i class="fa-solid fa-utensils text-amber-400"></i>
+              </div>
+              <div id="statTotalRecipes" class="text-2xl font-bold text-white font-['Outfit']">--</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs">Bekleyen Satınalma</span>
+                <i class="fa-solid fa-clock text-amber-500"></i>
+              </div>
+              <div id="statPendingOrders" class="text-2xl font-bold text-amber-400 font-['Outfit']">--</div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs">Toplam Zayiat (Fire)</span>
+                <i class="fa-solid fa-trash-can text-rose-400"></i>
+              </div>
+              <div id="statTotalWaste" class="text-2xl font-bold text-white font-['Outfit']">--</div>
+            </div>
+          </div>
+
+          <!-- Kritik Sıcaklık Uyarıları -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h4 class="font-semibold text-white mb-3 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Kritik Sıcaklık Uyarı Raporu (> 3°C)
+            </h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="px-4 py-2.5">Ekipman</th>
+                    <th class="px-4 py-2.5">Ölçülen Değer</th>
+                    <th class="px-4 py-2.5">Ölçen Personel</th>
+                    <th class="px-4 py-2.5">Zaman</th>
+                  </tr>
+                </thead>
+                <tbody id="criticalTempTableBody" class="divide-y divide-slate-800/60">
+                  <!-- Dinamik -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 8: YÖNETİCİ - KULLANICI YÖNETİMİ ================= -->
+        <section id="yoneticiKullanicilarTab" class="tab-pane hidden">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold text-white">Kullanıcı Yönetimi & RBAC Yetkilendirme</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                <span class="text-indigo-400 font-semibold">Sadece Yönetici:</span> 
+                Sisteme yeni yönetici, aşçı veya depo personeli ekleyin, rollerini belirleyin ve yönetin.
+              </p>
+            </div>
+            <button onclick="openNewUserModal()" class="py-2.5 px-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+              <i class="fa-solid fa-user-plus"></i> Yeni Personel Ekle
+            </button>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">Kullanıcı Adı</th>
+                    <th class="px-4 py-3">Ad Soyad</th>
+                    <th class="px-4 py-3">Rol</th>
+                    <th class="px-4 py-3">E-posta / Tel</th>
+                    <th class="px-4 py-3">İşe Başlama</th>
+                    <th class="px-4 py-3 text-right">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody" class="divide-y divide-slate-800/60">
+                  <!-- Dinamik -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODAL: YENİ PERSONEL EKLE (YÖNETİCİ) ================= -->
+  <div id="newUserModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+      <button onclick="closeNewUserModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-user-plus text-indigo-400"></i> Yeni Personel & Rol Tanımla
+      </h3>
+      <form onsubmit="handleCreateUser(event)" class="space-y-3.5">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Ad</label>
+            <input type="text" id="newAd" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Soyad</label>
+            <input type="text" id="newSoyad" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Kullanıcı Adı</label>
+            <input type="text" id="newKadi" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Şifre</label>
+            <input type="password" id="newSifre" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Rol (Yetki Grubu)</label>
+          <select id="newRole" required onchange="toggleRoleFields(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none">
+            <option value="asci">🍳 Aşçı / Şef (asci tablosu)</option>
+            <option value="depo">📦 Depo Sorumlusu (depopersoneli tablosu)</option>
+            <option value="yonetici">👑 Yönetici (yonetici tablosu)</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">E-posta</label>
+            <input type="email" id="newEmail" placeholder="ornek@restoran.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Telefon</label>
+            <input type="text" id="newTel" placeholder="05551234567" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Yöneticiye özel bütçe limiti -->
+        <div id="yoneticiExtraField" class="hidden">
+          <label class="block text-xs text-slate-300 mb-1">Bütçe Onay Yetkisi Limiti (TL)</label>
+          <input type="number" id="newButce" value="50000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none" />
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="closeNewUserModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">İptal</button>
+          <button type="submit" class="flex-1 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: YENİ SATINALMA TALEBİ (DEPO) ================= -->
+  <div id="newPurchaseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+      <button onclick="closeNewPurchaseModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-cart-shopping text-emerald-400"></i> Satınalma Talebi Oluştur
+      </h3>
+      <form onsubmit="handleCreatePurchase(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Talep Edilecek Malzeme</label>
+          <select id="purchaseMaterialSelect" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:border-emerald-500 focus:outline-none">
+            <!-- Dinamik -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">İstenen Miktar (Kg / Litre / Koli)</label>
+          <input type="text" id="purchaseAmountInput" required placeholder="Örn: 50 kg veya 10 koli" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:border-emerald-500 focus:outline-none" />
+        </div>
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="closeNewPurchaseModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">İptal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-xl text-xs font-bold">Talebi İlet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
